@@ -1,0 +1,46 @@
+# for gymnasium
+swig==4.2.1
+pygame==2.6.0
+# mujoco==2.3.3
+# gymnasium==0.28.1
+# swig>=4.2.1
+ufal.pybox2d>=2.3.10.3
+# gymnasium[box2d]
+gymnasium[mujoco]
+
+# for robosuite
+numpy>=1.13.3
+numba>=0.49.1
+scipy>=1.2.3
+mujoco>=2.3.0
+Pillow
+opencv-python
+pynput
+termcolor
+
+# for extra
+# required for IK controllers
+pybullet
+# required for GymWrapper
+gymnasium
+# macOS only
+hidapi
+# required for demonstration utils
+h5py
+# required for nvisii renderer
+open3d
+
+# for multi-agent
+pettingzoo>=1.24.3
+
+# for humanoid
+dm_control>=1.0.20
+gymnasium>=0.29.1
+# mujoco>=3.1.6
+jax>=0.4.30
+
+# for LLMs
+openai
+
+sphinx
+sphinx-book-theme
