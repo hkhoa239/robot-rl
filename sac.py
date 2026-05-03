@@ -329,10 +329,25 @@ def record_animation(agent: SACAgent, args, save_dir: str, num_episodes: int = 3
 
 
 # ── Main Training Loop ───────────────────────────────────────────────────────
-def main():
-    os.makedirs(SAVE_DIR, exist_ok=True)
+def train(total_episodes: int = TOTAL_EPISODES,
+          max_steps: int = MAX_STEPS,
+          seed: int = SEED,
+          save_dir: str = SAVE_DIR,
+          log_every: int = 20,
+          verbose: bool = True):
+    """Train SAC on FetchReach-v3.
+
+    Returns
+    -------
+    agent      : trained SACAgent
+    scores     : list[float] – per-episode total reward
+    avg_scores : list[float] – running mean (window 100) per episode
+    args       : robust-gymnasium config (useful for record_animation)
+    """
+    os.makedirs(save_dir, exist_ok=True)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"[INFO] Device: {device}")
+    if verbose:
+        print(f"[INFO] Device: {device}")
 
     # Robust-Gymnasium config
     args = get_config().parse_args([])
@@ -340,36 +355,37 @@ def main():
     args.noise_sigma  = 0.0
 
     # Seed
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     # Use dense reward so SAC can learn from shaped signal
     env = gym.make(ENV_NAME, reward_type="dense")
 
     # Probe dimensions from the Dict observation space
-    obs_dict, _ = env.reset(seed=SEED)
+    obs_dict, _ = env.reset(seed=seed)
     state       = flatten_obs(obs_dict)
     state_dim   = state.shape[0]                     # 16
     action_dim  = env.action_space.shape[0]           # 4
     action_low  = env.action_space.low
     action_high = env.action_space.high
 
-    print(f"[INFO] State dim : {state_dim}")
-    print(f"[INFO] Action dim: {action_dim}")
-    print(f"[INFO] Action range: [{action_low[0]:.1f}, {action_high[0]:.1f}]")
+    if verbose:
+        print(f"[INFO] State dim : {state_dim}")
+        print(f"[INFO] Action dim: {action_dim}")
+        print(f"[INFO] Action range: [{action_low[0]:.1f}, {action_high[0]:.1f}]")
 
     agent = SACAgent(state_dim, action_dim, action_low, action_high, device)
 
     scores, avg_scores = [], []
     recent_scores: deque = deque(maxlen=100)
 
-    for ep in range(1, TOTAL_EPISODES + 1):
-        obs_dict, _ = env.reset(seed=SEED + ep)
+    for ep in range(1, total_episodes + 1):
+        obs_dict, _ = env.reset(seed=seed + ep)
         state = flatten_obs(obs_dict)
         total_reward = 0.0
 
-        for _ in range(MAX_STEPS):
+        for _ in range(max_steps):
             action = agent.select_action(state)
 
             robust_input = {
@@ -390,19 +406,23 @@ def main():
 
         scores.append(total_reward)
         recent_scores.append(total_reward)
-        avg = np.mean(recent_scores)
+        avg = float(np.mean(recent_scores))
         avg_scores.append(avg)
 
-        if ep % 20 == 0:
+        if verbose and ep % log_every == 0:
             print(f"Episode {ep:4d} | Reward: {total_reward:7.1f} "
                   f"| Avg(100): {avg:7.1f} | α: {agent.alpha.item():.4f}")
 
-    # Save final model
+    env.close()
+    return agent, scores, avg_scores, args
+
+
+def main():
+    agent, scores, avg_scores, args = train()
     torch.save(agent.actor.state_dict(),
                os.path.join(SAVE_DIR, "sac_actor_final.pth"))
     torch.save(agent.critic.state_dict(),
                os.path.join(SAVE_DIR, "sac_critic_final.pth"))
-    env.close()
 
     plot_results(scores, avg_scores, SAVE_DIR)
     record_animation(agent, args, SAVE_DIR)

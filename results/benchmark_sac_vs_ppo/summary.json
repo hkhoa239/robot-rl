@@ -1,0 +1,20 @@
+[
+  {
+    "Algorithm": "SAC",
+    "Episodes": 200,
+    "Wall-time (s)": "53.5",
+    "Final-50 train reward": "-19.19",
+    "Best avg-100 train": "-21.13",
+    "Eval mean \u00b1 std": "-14.90 \u00b1 5.20",
+    "Eval min / max": "-23.31 / -7.31"
+  },
+  {
+    "Algorithm": "PPO",
+    "Episodes": 200,
+    "Wall-time (s)": "9.2",
+    "Final-50 train reward": "-23.71",
+    "Best avg-100 train": "-23.54",
+    "Eval mean \u00b1 std": "-20.89 \u00b1 4.07",
+    "Eval min / max": "-28.91 / -15.42"
+  }
+]
